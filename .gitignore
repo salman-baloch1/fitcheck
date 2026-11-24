@@ -1,0 +1,18 @@
+# R and RStudio
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rcheck/
+fitcheck_*.tar.gz
+inst/doc
+/doc/
+/Meta/
+
+# Never upload examinee data or checkpoint files
+*.csv
+*.xlsx
+*.sav
+*.rds
+Packet_*
+Paket_*
