@@ -1,0 +1,28 @@
+Package: fitcheck
+Type: Package
+Title: Check the Data, Then the Solution, Then the Fit, for Second-Order Factor Models
+Version: 0.2.0
+Authors@R: c(
+    person("Salman", "Rashid", email = "salman41pasca.2023@student.uny.ac.id", role = c("aut", "cre")),
+    person("Heri", "Retnawati", role = "aut"),
+    person("Samsul", "Hadi", role = "aut"))
+Description: A workflow for judging second-order confirmatory factor models fitted to
+    operational test data. It screens records with no real responses before
+    any model is fitted, shows whether screening changes the measurement
+    evidence within each test form and across forms (measurement invariance
+    with and without the flagged records), checks that a solution is
+    admissible under two identifications before fit is read, reports the
+    unbiased standardized root mean square residual with its interval
+    (Maydeu-Olivares, 2017, <doi:10.1007/s11336-016-9552-7>), shows how
+    estimation and fit would behave in smaller samples of the user's own
+    data, and tests whether section scores add value over the total score
+    (Haberman, 2008, <doi:10.3102/1076998607302636>). Built on 'lavaan'.
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Depends: R (>= 4.1.0)
+Imports: lavaan (>= 0.6-17), MASS, parallel, stats, utils
+URL: https://github.com/salman-baloch1/fitcheck
+BugReports: https://github.com/salman-baloch1/fitcheck/issues
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr

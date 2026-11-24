@@ -1,0 +1,258 @@
+---
+title: "Getting started with fitcheck"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with fitcheck}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+## The idea
+
+Second-order confirmatory factor models are often judged by fit indices
+against fixed cutoffs. fitcheck asks three questions first, in a fixed order:
+
+1. **Data.** Do the records contain real responses?
+2. **Solution.** Is the estimated solution admissible?
+3. **Fit.** Only then: what do the fit indices say, read with the unbiased
+   SRMR and its interval?
+
+A fourth step asks whether section scores deserve to be reported beside the
+total score.
+
+Each step is a separate function, so the checks can be added to an existing
+lavaan analysis. The function `fitcheck()` runs all steps and returns one
+report.
+
+## Example data
+
+The package ships with a simulated operational test: 2,000 records from three
+forms, 80 dichotomous items in three sections (Listening 30, Grammar 20,
+Reading 30), and 10 parcels. Some records were planted with every item scored
+0, and some with a whole section scored 0, as happens with blank or partly
+blank answer sheets.
+
+```{r data}
+library(fitcheck)
+data(sim_test)
+data(sim_test_design)
+items <- sim_test[, sim_test_design$items]
+str(sim_test_design$sections)
+cat(sim_test_design$model)
+```
+
+## Check 0: the data
+
+`screen_records()` flags two kinds of records: all-zero records and records
+with a whole section scored 0. It flags; it does not delete.
+
+```{r screen}
+scr <- screen_records(items, sim_test_design$sections, form = sim_test$form)
+scr
+```
+
+Can an all-zero record come from a real examinee who guessed? With four
+options, the chance of scoring 0 on 30 items by blind guessing is very small:
+
+```{r zero}
+zero_probability(30)
+```
+
+Form B has far more flagged records than the other forms. In real data, a
+pattern like this points to an administration or scanning problem rather than
+to very weak examinees.
+
+### Does screening matter?
+
+`screening_sensitivity()` fits the same model with all records and with the
+retained records only, and shows what changes.
+
+```{r sensitivity}
+keep <- scr$flags$keep
+sens <- screening_sensitivity(items, keep, sim_test_design$parcels,
+                              sim_test_design$model, std.lv = FALSE)
+sens
+```
+
+The fit indices barely move, but the mean first-order loading and the omegas
+change clearly. Records without real responses make the measurement look
+stronger than it is, and the fit indices do not warn about this.
+
+### Does screening matter in every form?
+
+Flagged records are often concentrated in a few forms. `screening_by_form()`
+repeats the comparison within each form, and `screening_invariance()` tests
+configural, metric, and scalar invariance across forms with all records and
+with the retained records.
+
+```{r forms}
+by_form <- screening_by_form(items, keep, sim_test$form,
+                             sim_test_design$parcels, sim_test_design$model)
+by_form[by_form$index == "mean_first_order_loading", ]
+inv <- screening_invariance(items, keep, sim_test$form,
+                            sim_test_design$parcels, sim_test_design$model)
+inv
+```
+
+Screening changes form B much more than forms A and C, because form B holds
+most of the flagged records. In these simulated data the invariance
+conclusion is the same with and without the flagged records. In operational
+data it can differ, and both results should then be reported. A second-order
+model is tested through its correlated first-order version, which is
+equivalent with three first-order factors.
+
+### When screening changes the comparison of forms
+
+In the data above, the invariance conclusion does not depend on screening. The
+next example shows the opposite case. Three forms share the same 27 items and
+the same loadings, so the forms are invariant by construction. The parcels
+differ in difficulty (easy, medium, hard), as in many operational tests.
+Adding 100 all-zero records to form B alone is enough to make metric
+invariance fail with all records, while the retained records support scalar
+invariance.
+
+```{r forms2}
+make_form <- function(n, seed) {
+  set.seed(seed)
+  p_correct <- rep(rep(c(.85, .60, .35), each = 3), 3)
+  R <- matrix(.75, 3, 3); diag(R) <- 1
+  F <- matrix(stats::rnorm(n * 3), n) %*% chol(R)
+  Y <- sapply(1:27, function(j) {
+    s <- (j - 1) %/% 9 + 1
+    as.integer(.65 * F[, s] + sqrt(1 - .65^2) * stats::rnorm(n) > stats::qnorm(1 - p_correct[j]))
+  })
+  colnames(Y) <- paste0(rep(c("L", "G", "R"), each = 9), rep(1:9, 3))
+  Y
+}
+X2 <- rbind(make_form(700, 1), make_form(700, 2), make_form(700, 3),
+            matrix(0L, 100, 27))
+form2 <- c(rep(c("A", "B", "C"), each = 700), rep("B", 100))
+sections2 <- list(Listening = paste0("L", 1:9), Grammar = paste0("G", 1:9),
+                  Reading = paste0("R", 1:9))
+parcels2 <- list()
+for (s in c("L", "G", "R")) for (p in 1:3) parcels2[[paste0(s, p)]] <- paste0(s, (p - 1) * 3 + 1:3)
+model2 <- second_order_syntax(list(Listening = c("L1", "L2", "L3"),
+                                   Grammar = c("G1", "G2", "G3"),
+                                   Reading = c("R1", "R2", "R3")))
+s2 <- screen_records(X2, sections2, form = form2)
+screening_invariance(X2, s2$flags$keep, form2, parcels2, model2)
+```
+
+All-zero records lower easy parcels much more than hard parcels, so in form B
+the parcels no longer follow the ratio of their loadings. A reader who saw
+only the analysis with all records would conclude that the forms measure the
+sections differently, although the difference comes from records without
+real responses.
+
+## Checks 1 to 4: the solution, then the fit
+
+Fit the model to the parcel scores of the retained records with lavaan, then
+run the four checks.
+
+```{r checks}
+d <- parcel_scores(items[keep, ], sim_test_design$parcels)
+fit <- lavaan::cfa(sim_test_design$model, data = d, estimator = "MLR")
+four_checks(fit)
+```
+
+Check 1 comes first: if the solution is not admissible (for example, a
+negative variance), the fit indices below it describe a model that cannot be
+interpreted, so they should not be read.
+
+A negative disturbance variance can show up differently depending on how the
+model is identified. `identification_check()` fits the model both ways.
+
+```{r ident}
+identification_check(sim_test_design$model, d)
+```
+
+For an admissible solution, `hierarchical_indices()` gives the omegas,
+omega-hierarchical, and the explained common variance from the
+Schmid–Leiman transformation.
+
+```{r hier}
+lapply(hierarchical_indices(fit), round, 3)
+```
+
+## How would the model behave in smaller samples?
+
+`boot_by_n()` draws bootstrap samples of your own data at smaller sizes,
+refits the model, and counts admissible, improper, and nonconverged solutions
+separately. Every replication has its own pre-drawn seed, so the results are
+identical on one core or several. Use 50 or more replications in practice;
+10 keeps this example fast.
+
+```{r boot}
+boot_by_n(d, sim_test_design$model, ns = c(100, 300), reps = 10, seed = 1)
+```
+
+`mini_mc()` does the same from a population matrix, for example the matrix
+implied by a fitted model:
+`cov2cor(lavaan::lavInspect(fit, "implied")$cov)`.
+
+## Do section scores add value?
+
+`added_value()` compares how well a section score and the total score predict
+the true section score (Haberman, 2008). The decision is based on a bootstrap
+interval for the difference: *adds value*, *no added value*, or
+*inconclusive*. `profile_check()` asks whether two section scores of one
+examinee can be told apart.
+
+```{r subscores}
+av <- added_value(items[keep, ], sim_test_design$sections, B = 200, seed = 1)
+av
+profile_check(items[keep, ], sim_test_design$sections)
+```
+
+## Everything at once
+
+```{r workflow}
+report <- fitcheck(items, sim_test_design$sections, sim_test_design$parcels,
+                   form = sim_test$form, B = 200)
+report
+```
+
+If `model` is not given, `fitcheck()` builds a second-order model with one
+first-order factor per section, measured by the parcels of that section.
+
+## Limits
+
+* **Parcels.** The workflow fits the model to parcel scores with robust
+  maximum likelihood, because operational forms often have 80 or more items.
+  Parcelling can hide item-level misfit. Item-level estimation of ordinal
+  data (for example WLSMV) is a planned extension.
+* **Screening is a judgment.** An all-zero record is flagged, not proven to
+  be empty. `zero_probability()` helps judge how plausible a real all-zero
+  score is, and the sensitivity table shows what the decision changes. The
+  decision stays with the analyst.
+* **Model family.** The checks are written for second-order models.
+  `four_checks()` works for any lavaan fit, but `hierarchical_indices()`
+  assumes one second-order factor.
+
+## Related tools
+
+fitcheck builds on known methods and does not replace the packages that
+implement them. lavaan provides estimation, the admissibility check, and
+`lavResiduals()` for the unbiased SRMR (Maydeu-Olivares, 2017). Omegas and
+related indices are also available in semTools and psych; Haberman's
+added-value statistics in subscore; simulation-based fit cutoffs in FCO.
+fitcheck puts screening, admissibility, fit and score reporting in one order
+and one report.
+
+## References
+
+Chen, F. F. (2007). Sensitivity of goodness of fit indexes to lack of
+measurement invariance. *Structural Equation Modeling, 14*(3), 464–504.
+https://doi.org/10.1080/10705510701301834
+
+Haberman, S. J. (2008). When can subscores have value? *Journal of
+Educational and Behavioral Statistics, 33*(2), 204–229.
+https://doi.org/10.3102/1076998607302636
+
+Maydeu-Olivares, A. (2017). Assessing the size of model misfit in structural
+equation models. *Psychometrika, 82*(3), 533–558.
+https://doi.org/10.1007/s11336-016-9552-7

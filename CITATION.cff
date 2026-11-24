@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "fitcheck: Check the Data, Then the Solution, Then the Fit, for Second-Order Factor Models"
+version: 0.2.0
+type: software
+license: GPL-3.0-only
+repository-code: "https://github.com/salman-baloch1/fitcheck"
+authors:
+  - family-names: Rashid
+    given-names: Salman
+    affiliation: Universitas Negeri Yogyakarta
+  - family-names: Retnawati
+    given-names: Heri
+    affiliation: Universitas Negeri Yogyakarta
+  - family-names: Hadi
+    given-names: Samsul
+    affiliation: Universitas Negeri Yogyakarta

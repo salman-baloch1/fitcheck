@@ -1,0 +1,8 @@
+bibentry(
+  bibtype = "Manual",
+  title = "fitcheck: Check the Data, Then the Solution, Then the Fit, for Second-Order Factor Models",
+  author = c(person("Salman", "Rashid"), person("Heri", "Retnawati"), person("Samsul", "Hadi")),
+  year = "2026",
+  note = "R package version 0.2.0",
+  url = "https://github.com/salman-baloch1/fitcheck"
+)
