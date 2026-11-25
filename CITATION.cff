@@ -2,6 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "fitcheck: Check the Data, Then the Solution, Then the Fit, for Second-Order Factor Models"
 version: 0.2.0
+doi: 10.5281/zenodo.24539812
 type: software
 license: GPL-3.0-only
 repository-code: "https://github.com/salman-baloch1/fitcheck"
@@ -15,3 +16,10 @@ authors:
   - family-names: Hadi
     given-names: Samsul
     affiliation: Universitas Negeri Yogyakarta
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24539810
+    description: "Concept DOI: all versions of fitcheck"
+  - type: doi
+    value: 10.5281/zenodo.24539812
+    description: "Version DOI: fitcheck 0.2.0"

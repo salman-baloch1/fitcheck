@@ -2,6 +2,7 @@
 
 [![R-CMD-check](https://github.com/salman-baloch1/fitcheck/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/salman-baloch1/fitcheck/actions/workflows/R-CMD-check.yaml)
 [![License: GPL-3](https://img.shields.io/badge/license-GPL--3-blue.svg)](LICENSE.md)
+[![DOI](https://zenodo.org/badge/1470291412.svg)](https://doi.org/10.5281/zenodo.24539810)
 
 **Check the data, then the solution, then the fit, for second-order factor models in operational testing.**
 
@@ -192,8 +193,10 @@ is established under two identifications, and only then is fit read, all in one 
 ## Citation
 
 Rashid, S., Retnawati, H., & Hadi, S. (2026). *fitcheck: Check the data, then the solution, then the fit,
-for second-order factor models* (Version 0.2.0) [Computer software].
-https://github.com/salman-baloch1/fitcheck
+for second-order factor models* (Version 0.2.0) [Computer software]. Zenodo.
+https://doi.org/10.5281/zenodo.24539812
+
+To cite all versions of fitcheck, use https://doi.org/10.5281/zenodo.24539810.
 
 In R: `citation("fitcheck")`.
 
